@@ -1,10 +1,10 @@
-name: cicd
+name: ${{ values.app_name }}-cicd
 "on":
   push:
     paths:
       - src/**
     branches:
-      - main
+      - master
 
 jobs:
   ci:
@@ -17,15 +17,16 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
-          username: "${{ secrets.DOCKERHUB_USERNAME }}"
-          password: "${{ secrets.DOCKERHUB_TOKEN }}"
+          username: {% raw %}${{ secrets.DOCKERHUB_USERNAME }}{% endraw %}
+          password: {% raw %}${{ secrets.DOCKERHUB_TOKEN }}{% endraw %}
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
           push: true
-          tags: "papoucha/udemy-python-app:${{ env.COMMIT_ID }}"
+          # Ici on mixe une variable Backstage et une variable GitHub Actions raw
+          tags: papoucha/${{ values.app_name }}:{% raw %}${{ env.COMMIT_ID }}{% endraw %}
     outputs:
-      commit_id: ${{ env.COMMIT_ID  }}
+      commit_id: {% raw %}${{ env.COMMIT_ID }}{% endraw %}
   cd:
     needs: ci
     runs-on: self-hosted
@@ -34,15 +35,15 @@ jobs:
       - name: Modify values file
         shell: bash
         run: |
-          echo  ${{needs.ci.outputs.commit_id}}
+          echo {% raw %}${{ needs.ci.outputs.commit_id }}{% endraw %}
           sudo apt-get update && sudo apt-get install -y pipx
           pipx install yq
-          yq -Yi '.image.tag = "${{needs.ci.outputs.commit_id}}"'  charts/udemy-python-app/values.yaml
+          yq -Yi '.image.tag = "{% raw %}${{ needs.ci.outputs.commit_id }}{% endraw %}"' charts/${{ values.app_name }}/values-${{ values.app_env }}.yaml
 
       - name: Commit et Push des changements
         uses: EndBug/add-and-commit@v10
         with:
-          message: "Update values.yaml with commit ${{needs.ci.outputs.commit_id}}"
+          message: "Update values.yaml with commit {% raw %}${{ needs.ci.outputs.commit_id }}{% endraw %}"
 
       - name: install argocd
         shell: bash
@@ -59,7 +60,7 @@ jobs:
           --insecure \
           --grpc-web \
           --username admin  \
-          --password ${{ secrets.ARGOCD_PASSWORD}}
+          --password {% raw %}${{ secrets.ARGOCD_PASSWORD }}{% endraw %}
       - name: sync app
         run: |
-          argocd app  sync python-app
+          argocd app sync ${{ values.app_name }}
