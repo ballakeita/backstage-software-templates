@@ -50,22 +50,17 @@ spec:
         url: ./template
         values:
           # On utilise maintenant component_id saisi dans le formulaire
-          name: ${{ parameters.component_id }}
-          environment: ${{ parameters.environment }}
+          app_name: ${{ parameters.component_id }}
+          app_env: ${{ parameters.environment }}
 
-    - id: fetchDocs
-      name: Fetch Docs
-      action: fetch:plain
-      input:
-        targetPath: ./community
-        url: https://github.com/backstage/community/tree/main/backstage-community-sessions
 
     - id: publish
       name: Publish
       action: publish:github
       input:
         description: This is ${{ parameters.component_id }}
-        repoUrl: ${{ parameters.repoUrl }}
+        repoUrl: github.com?owner=ballakeita&repo=${{ parameters.component_id }}
+        protectdefaultBranch: false
         defaultBranch: 'main'
 
     - id: register
