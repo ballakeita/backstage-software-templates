@@ -60,7 +60,6 @@ spec:
       input:
         description: This is ${{ parameters.component_id }}
         repoUrl: github.com?owner=ballakeita&repo=${{ parameters.component_id }}
-        protectdefaultBranch: false
         defaultBranch: 'main'
 
     - id: register
